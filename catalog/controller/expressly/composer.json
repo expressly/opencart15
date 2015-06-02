@@ -1,0 +1,27 @@
+{
+    "name": "expressly/opencart15",
+    "description": "Expressly OpenCart 1.5 Module",
+    "type": "module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sam Pratt",
+            "email": "sam@buyexpressly.com"
+        }
+    ],
+    "require": {
+        "expressly/php-common": "dev-master"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/expressly/php-common"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Catalog\\Expressly\\": "lib/",
+            "Admin\\Expressly\\": "../../../admin/controller/expressly/lib/"
+        }
+    }
+}

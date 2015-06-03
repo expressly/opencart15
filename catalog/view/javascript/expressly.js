@@ -1,5 +1,9 @@
 (function () {
-    popupContinue = function () {
+    popupContinue = function (event) {
+        event.style.display = 'none';
+        var loader = event.nextElementSibling.style.display = 'block';
+        loader.nextElementSibling.style.display = 'none';
+
         var host = window.location.origin,
             parameters = window.location.search,
             uuid;
@@ -15,15 +19,15 @@
         window.location.replace(host + '?route=expressly/migrate/complete&uuid=' + uuid);
     };
 
-    popupClose = function () {
+    popupClose = function (event) {
         window.location.replace(window.location.origin);
     };
 
     openTerms = function (event) {
-        console.log(event);
+        window.open(event.href, '_blank');
     };
 
     openPrivacy = function (event) {
-        console.log(event);
+        window.open(event.href, '_blank');
     };
 })();

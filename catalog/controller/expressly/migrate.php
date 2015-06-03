@@ -122,8 +122,10 @@ class ControllerExpresslyMigrate extends CommonController
             if (!empty($json['cart']['couponCode'])) {
                 $this->session->data['coupon'];
             }
+
+            $dispatcher->dispatch('customer.migrate.success', $event);
         } catch (\Exception $e) {
-            var_dump((string)$e);
+            // TODO: Log
         }
 
         $this->redirect('/');

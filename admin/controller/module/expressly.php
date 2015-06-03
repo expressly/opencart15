@@ -129,10 +129,14 @@ class ControllerModuleExpressly extends CommonController
             )
         );
 
-        $app = $this->getApp();
-        $dispatcher = $this->getDispatcher();
-        $merchant = $app['merchant.provider']->getMerchant(true);
-        $dispatcher->dispatch('merchant.register', new MerchantEvent($merchant));
-        $dispatcher->dispatch('merchant.password.save', new MerchantEvent($merchant));
+        try {
+            $app = $this->getApp();
+            $dispatcher = $this->getDispatcher();
+            $merchant = $app['merchant.provider']->getMerchant(true);
+            $dispatcher->dispatch('merchant.register', new MerchantEvent($merchant));
+            $dispatcher->dispatch('merchant.password.save', new MerchantEvent($merchant));
+        } catch (\Exception $e) {
+            // TODO: Log
+        }
     }
 }

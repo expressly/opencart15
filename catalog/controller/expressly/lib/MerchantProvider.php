@@ -19,13 +19,17 @@ class MerchantProvider extends \Controller implements MerchantProviderInterface
     private function updateMerchant()
     {
         $this->load->model('setting/setting');
-        $preferences = $this->model_setting_setting->getSetting('EXPRESSLY_PREFERENCES');
+        $preferences = $this->model_setting_setting->getSetting('expressly_preferences');
 
         $merchant = new Merchant();
 
         // Assumption to wether array is completely full, or not at all is valid
         if (!empty($preferences)) {
             $merchant
+                ->setName($preferences['name'])
+                ->setImage($preferences['image'])
+                ->setTerms($preferences['terms'])
+                ->setPolicy($preferences['policy'])
                 ->setDestination($preferences['destination'])
                 ->setHost($preferences['host'])
                 ->setOffer($preferences['offer'])

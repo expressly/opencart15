@@ -35,7 +35,7 @@ class ControllerExpresslyDispatcher extends CommonController
 
         if (preg_match("/^\/?expressly\/api\/([\w-]+)\/?$/", $query, $matches)) {
             $key = array_pop($matches);
-            $this->redirect($this->url->link('expressly/migrate/start', "uuid={$key}", 'SSL'));
+            $this->redirect($this->url->link('expressly/migrate/popup', "uuid={$key}", 'SSL'));
 
             return;
         }

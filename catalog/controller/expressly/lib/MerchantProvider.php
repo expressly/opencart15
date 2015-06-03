@@ -13,6 +13,11 @@ class MerchantProvider extends \Controller implements MerchantProviderInterface
     {
         parent::__construct($registry);
 
+        $this->updateMerchant();
+    }
+
+    private function updateMerchant()
+    {
         $this->load->model('setting/setting');
         $preferences = $this->model_setting_setting->getSetting('EXPRESSLY_PREFERENCES');
 
@@ -21,11 +26,11 @@ class MerchantProvider extends \Controller implements MerchantProviderInterface
         // Assumption to wether array is completely full, or not at all is valid
         if (!empty($preferences)) {
             $merchant
-                ->setDestination($preferences['DESTINATION'])
-                ->setHost($preferences['HOST'])
-                ->setOffer($preferences['OFFER'])
-                ->setPassword($preferences['PASSWORD'])
-                ->setPath($preferences['PATH']);
+                ->setDestination($preferences['destination'])
+                ->setHost($preferences['host'])
+                ->setOffer($preferences['offer'])
+                ->setPassword($preferences['password'])
+                ->setPath($preferences['path']);
         }
 
         $this->merchant = $merchant;
@@ -38,8 +43,12 @@ class MerchantProvider extends \Controller implements MerchantProviderInterface
         return $this;
     }
 
-    public function getMerchant()
+    public function getMerchant($update = false)
     {
+        if (!$this->merchant instanceof Merchant || $update) {
+            $this->updateMerchant();
+        }
+
         return $this->merchant;
     }
 }

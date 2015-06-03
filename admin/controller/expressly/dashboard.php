@@ -2,7 +2,7 @@
 
 require 'common.php';
 
-class ControllerModuleExpressly extends CommonController
+class ControllerExpresslyDashboard extends CommonController
 {
     private $errors = array();
 
@@ -31,9 +31,8 @@ class ControllerModuleExpressly extends CommonController
         $this->response->setOutput($this->render());
     }
 
-    public function install()
+    protected function validate()
     {
-//        $this->load->model('expressly/extension');
-//        $this->model_expressly_extension->install();
+        return true;
     }
 }

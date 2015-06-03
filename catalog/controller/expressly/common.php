@@ -34,4 +34,9 @@ class CommonController extends Controller
     {
         return $this->dispatcher;
     }
+
+    public function getMerchant()
+    {
+        return $this->app['merchant.provider']->getMerchant();
+    }
 }

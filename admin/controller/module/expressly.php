@@ -87,12 +87,15 @@ class ControllerModuleExpressly extends CommonController
                 ->setName($this->request->post['expressly_shop_name'])
                 ->setImage($this->request->post['expressly_image'])
                 ->setTerms($this->request->post['expressly_terms'])
-                ->setPolicy($this->request->post['expressly_policy'])
+                ->setPolicy($this->request->post['expressly_privacy'])
                 ->setDestination($this->request->post['expressly_destination'])
                 ->setOffer($this->request->post['expressly_offer'])
                 ->setPassword($this->request->post['expressly_password']);
 
             $provider->setMerchant($merchant);
+            $dispatcher = $this->getDispatcher();
+            $event = new MerchantEvent($merchant);
+            $dispatcher->dispatch('merchant.update', $event);
 
             $this->session->data['success'] = $this->language->get('text_success');
             $this->cache->delete('expressly');

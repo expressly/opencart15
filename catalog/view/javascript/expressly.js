@@ -1,7 +1,8 @@
 (function () {
     popupContinue = function (event) {
         event.style.display = 'none';
-        var loader = event.nextElementSibling.style.display = 'block';
+        var loader = event.nextElementSibling;
+        loader.style.display = 'block';
         loader.nextElementSibling.style.display = 'none';
 
         var host = window.location.origin,

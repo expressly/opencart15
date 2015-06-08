@@ -55,7 +55,7 @@
                     <tr>
                         <td></td>
                         <td>
-                            <img src="<?php echo $image_url; ?>"/>
+                            <img src="<?php echo $image_url; ?>" width="100px" height="100px" style="border: 1px solid black;"/>
                         </td>
                     </tr>
                     <tr>

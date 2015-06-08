@@ -174,7 +174,7 @@ class ControllerModuleExpressly extends CommonController
             $dispatcher->dispatch('merchant.register', $event);
 
             if (!$event->isSuccessful()) {
-                throw new \Exception("Failed to register");
+                throw new \Exception(self::processError($event));
             }
 
             $content = $event->getContent();
@@ -185,17 +185,40 @@ class ControllerModuleExpressly extends CommonController
             $provider->setMerchant($merchant);
         } catch (Buzz\Exception\RequestException $e) {
             $app['logger']->addError((string)$e);
-            $this->error['warning'] = $e->getMessage() . '. Please contact expressly.';
+            $this->data['error_warning'] = 'We had trouble talking to the server. Please contact expressly.';
 
             return false;
         } catch (\Exception $e) {
             $app['logger']->addError((string)$e);
-            $this->error['warning'] = $e->getMessage();
+            $this->data['error_warning'] = $e->getMessage();
 
             return false;
         }
 
         return true;
+    }
+
+    public static function processError(Symfony\Component\EventDispatcher\Event $event)
+    {
+        $content = $event->getContent();
+        $message[] = $content['message'];
+
+        $addBulletpoints = function ($key) use ($content, $message) {
+            if (!empty($content[$key])) {
+                $message[] = '<ul>';
+
+                foreach ($content[$key] as $point) {
+                    $message[] = "<li>{$point}</li>";
+                }
+
+                $message[] = '</ul>';
+            }
+        };
+
+        $addBulletpoints('actions');
+        $addBulletpoints('causes');
+
+        return implode('', $message);
     }
 
     public function register()

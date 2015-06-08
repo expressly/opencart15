@@ -1,9 +1,9 @@
 <?php
 
-use Catalog\Expressly\MerchantProvider;
 use Expressly\Client;
+use Expressly\Entity\MerchantType;
 
-class CommonController extends Controller
+abstract class AbstractCommonController extends Controller
 {
     private $app;
     private $dispatcher;
@@ -12,18 +12,16 @@ class CommonController extends Controller
     {
         parent::__construct($registry);
 
-        require_once __DIR__ . '/vendor/autoload.php';
-
-        $client = new Client();
+        $client = new Client(MerchantType::OPENCART_1);
         $app = $client->getApp();
 
-        $app['merchant.provider'] = $app->share(function () use ($registry) {
-            return new MerchantProvider($registry);
-        });
+        $this->setOverrides($app, $registry);
 
         $this->app = $app;
         $this->dispatcher = $this->app['dispatcher'];
     }
+
+    protected abstract function setOverrides($app, $registry);
 
     public function getApp()
     {

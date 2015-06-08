@@ -20,8 +20,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "Catalog\\Expressly\\": "lib/",
-            "Admin\\Expressly\\": "../../../admin/controller/expressly/lib/"
-        }
+            "Admin\\": "lib/admin/",
+            "Catalog\\": "lib/catalog/"
+        },
+        "files": [
+            "AbstractCommonController.php",
+            "AbstractMerchantProvider.php"
+        ]
     }
 }

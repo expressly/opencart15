@@ -1,5 +1,5 @@
 .idea
-vendor
+expressly/vendor
 node_modules
 *.log
 .sass-cache

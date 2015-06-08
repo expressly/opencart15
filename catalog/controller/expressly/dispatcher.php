@@ -1,5 +1,6 @@
 <?php
 
+use Catalog\CommonController;
 use Expressly\Entity\Address;
 use Expressly\Entity\Customer;
 use Expressly\Entity\Email;
@@ -7,8 +8,9 @@ use Expressly\Entity\Merchant;
 use Expressly\Entity\Phone;
 use Expressly\Event\ResponseEvent;
 use Expressly\Presenter\CustomerMigratePresenter;
+use Expressly\Presenter\PingPresenter;
 
-require_once 'common.php';
+require_once __DIR__ . '/../../../expressly/includes.php';
 
 class ControllerExpresslyDispatcher extends CommonController
 {
@@ -45,9 +47,8 @@ class ControllerExpresslyDispatcher extends CommonController
 
     private function ping()
     {
-        $response = new ResponseEvent();
-        $this->getDispatcher()->dispatch('utility.ping', $response);
-        $this->response->setOutput(json_encode($response->getResponse()));
+        $presenter = new PingPresenter();
+        $this->response->setOutput(json_encode($presenter->toArray()));
     }
 
     private function retrieveUserByEmail($emailAddress)

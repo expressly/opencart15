@@ -1,13 +1,11 @@
 <?php
 
-namespace Catalog\Expressly;
-
 use Expressly\Entity\Merchant;
 use Expressly\Provider\MerchantProviderInterface;
 
-class MerchantProvider extends \Controller implements MerchantProviderInterface
+abstract class AbstractMerchantProvider extends \Controller implements MerchantProviderInterface
 {
-    private $merchant;
+    protected $merchant;
 
     public function __construct($registry)
     {
@@ -23,10 +21,11 @@ class MerchantProvider extends \Controller implements MerchantProviderInterface
 
         $merchant = new Merchant();
 
-        // Assumption to wether array is completely full, or not at all is valid
+        // Assumption to whether array is completely full, or not at all is valid
         if (!empty($preferences)) {
             $merchant
-                ->setName($preferences['name'])
+                ->setName($this->config->get('config_title'))
+                ->setUuid($preferences['uuid'])
                 ->setImage($preferences['image'])
                 ->setTerms($preferences['terms'])
                 ->setPolicy($preferences['policy'])
@@ -40,12 +39,7 @@ class MerchantProvider extends \Controller implements MerchantProviderInterface
         $this->merchant = $merchant;
     }
 
-    public function setMerchant(Merchant $merchant)
-    {
-        $this->merchant = $merchant;
-
-        return $this;
-    }
+    public abstract function setMerchant(Merchant $merchant);
 
     public function getMerchant($update = false)
     {

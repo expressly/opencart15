@@ -1,9 +1,10 @@
 <?php
 
+use Admin\CommonController;
 use Expressly\Entity\Merchant;
 use Expressly\Event\MerchantEvent;
 
-require __DIR__ . '/../expressly/common.php';
+require_once __DIR__ . '/../../../expressly/includes.php';
 
 class ControllerModuleExpressly extends CommonController
 {
@@ -34,6 +35,7 @@ class ControllerModuleExpressly extends CommonController
             )
         );
 
+        $this->data['register'] = $this->url->link('module/expressly/register', 'token=' . $token, 'SSL');
         $this->data['action'] = $this->url->link('module/expressly/save', 'token=' . $token, 'SSL');
         $this->data['cancel'] = $this->url->link('extension/module', 'token=' . $token, 'SSL');
         $this->data['token'] = $token;
@@ -49,13 +51,31 @@ class ControllerModuleExpressly extends CommonController
         $this->data['expressly_offer'] = (bool)$merchant->getOffer();
         $this->data['expressly_password'] = $merchant->getPassword();
 
+        $uuid = $merchant->getUuid();
+        $password = $merchant->getPassword();
+        $this->data['registered'] = empty($uuid) && empty($password) ? false : true;
+
         $this->data['shop_name'] = $this->language->get('shop_name');
         $this->data['image'] = $this->language->get('image');
+        $this->data['image_url'] = $merchant->getImage();
+        $this->data['image_comment'] = sprintf(
+            $this->language->get('image_comment'),
+            $merchant->getImage()
+        );
         $this->data['terms'] = $this->language->get('terms');
+        $this->data['terms_comment'] = sprintf(
+            $this->language->get('terms_comment'),
+            $merchant->getTerms()
+        );
         $this->data['privacy'] = $this->language->get('privacy');
-        $this->data['destination'] = $this->language->get('destination');
-        $this->data['offer'] = $this->language->get('offer');
+        $this->data['privacy_comment'] = sprintf(
+            $this->language->get('privacy_comment'),
+            $merchant->getPolicy()
+        );
+        //$this->data['destination'] = $this->language->get('destination');
+        //$this->data['offer'] = $this->language->get('offer');
         $this->data['password'] = $this->language->get('password');
+        $this->data['button_register'] = $this->language->get('button_register');
         $this->data['button_save'] = $this->language->get('button_save');
         $this->data['button_cancel'] = $this->language->get('button_cancel');
 
@@ -120,26 +140,68 @@ class ControllerModuleExpressly extends CommonController
         $this->model_setting_setting->editSetting(
             'expressly_preferences',
             array(
-                'name' => $this->config->get('config_title'),
+                'uuid' => '',
                 'image' => sprintf('%simage/%s', $url, $this->config->get('config_logo')),
                 'terms' => $url . 'index.php?route=information/information&information_id=5',
                 'policy' => $url . 'index.php?route=information/information&information_id=3',
                 'host' => $url,
                 'destination' => '/',
                 'offer' => (int)true,
-                'password' => Merchant::createPassword(),
+                'password' => '',
                 'path' => '?route=expressly/dispatcher/index&query='
             )
         );
 
+        return $this->sendRegister();
+    }
+
+    private function sendRegister()
+    {
+        $app = $this->getApp();
+
         try {
-            $app = $this->getApp();
             $dispatcher = $this->getDispatcher();
-            $merchant = $app['merchant.provider']->getMerchant(true);
-            $dispatcher->dispatch('merchant.register', new MerchantEvent($merchant));
-            $dispatcher->dispatch('merchant.password.save', new MerchantEvent($merchant));
+            $provider = $app['merchant.provider'];
+            $merchant = $provider->getMerchant(true);
+
+            $uuid = $merchant->getUuid();
+            $password = $merchant->getPassword();
+            if (!empty($uuid) && !empty($password)) {
+                throw new \Exception("{$merchant->getHost()} is already registered.");
+            }
+
+            $event = new MerchantEvent($merchant);
+            $dispatcher->dispatch('merchant.register', $event);
+
+            if (!$event->isSuccessful()) {
+                throw new \Exception("Failed to register");
+            }
+
+            $content = $event->getContent();
+            $merchant
+                ->setUuid($content['uuid'])
+                ->setPassword($content['secretKey']);
+
+            $provider->setMerchant($merchant);
+        } catch (Buzz\Exception\RequestException $e) {
+            $app['logger']->addError((string)$e);
+            $this->error['warning'] = $e->getMessage() . '. Please contact expressly.';
+
+            return false;
         } catch (\Exception $e) {
-            // TODO: Log
+            $app['logger']->addError((string)$e);
+            $this->error['warning'] = $e->getMessage();
+
+            return false;
         }
+
+        return true;
+    }
+
+    public function register()
+    {
+        $this->sendRegister();
+
+        $this->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'));
     }
 }

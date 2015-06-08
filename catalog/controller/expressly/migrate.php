@@ -1,8 +1,9 @@
 <?php
 
+use Catalog\CommonController;
 use Expressly\Event\CustomerMigrateEvent;
 
-require_once 'common.php';
+require_once __DIR__ . '/../../../expressly/includes.php';
 
 class ControllerExpresslyMigrate extends CommonController
 {
@@ -45,18 +46,19 @@ class ControllerExpresslyMigrate extends CommonController
         $app = $this->getApp();
         $dispatcher = $this->getDispatcher();
 
-        $event = new CustomerMigrateEvent($this->getMerchant(), $uuid);
-        $dispatcher->dispatch('customer.migrate.complete', $event);
-        $json = $event->getResponse();
-
-        if (empty($json)) {
-            $this->redirect('/');
-        }
-
-        $this->customer->logout();
-        $this->cart->clear();
-
         try {
+            $event = new CustomerMigrateEvent($this->getMerchant(), $uuid);
+            $dispatcher->dispatch('customer.migrate.complete', $event);
+            $response = $event->getResponse();
+            $json = $event->getContent();
+
+            if (!$response->isSuccessful()) {
+                $this->redirect('/');
+            }
+
+            $this->customer->logout();
+            $this->cart->clear();
+
             $email = $json['data']['email'];
             $this->load->model('account/customer');
 
@@ -153,7 +155,7 @@ class ControllerExpresslyMigrate extends CommonController
 
             $dispatcher->dispatch('customer.migrate.success', $event);
         } catch (\Exception $e) {
-            // TODO: Log
+            $app['logger']->addError((string)$e);
         }
 
         $this->redirect('/');

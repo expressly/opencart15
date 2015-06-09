@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "6a36fb9585cbc624960cee93ba57ec1d",
+    "hash": "69e1baa17197e9b0f6759876a5f41726",
     "packages": [
         {
             "name": "deralex/yaml-config-service-provider",
@@ -125,7 +125,7 @@
         },
         {
             "name": "expressly/php-common",
-            "version": "dev-master",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/expressly/php-common.git",
@@ -984,9 +984,7 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "expressly/php-common": 20
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],

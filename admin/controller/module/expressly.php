@@ -1,7 +1,6 @@
 <?php
 
 use Admin\CommonController;
-use Expressly\Entity\Merchant;
 use Expressly\Event\MerchantEvent;
 
 require_once __DIR__ . '/../../../expressly/includes.php';

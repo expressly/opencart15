@@ -126,7 +126,7 @@ class ControllerModuleExpressly extends CommonController
                 }
 
                 if (!$event->isSuccessful()) {
-                    throw new \Exception(self::processError($event->getContent()));
+                    throw new \Exception(self::processError($event));
                 }
 
                 if (empty($uuid) && empty($password)) {

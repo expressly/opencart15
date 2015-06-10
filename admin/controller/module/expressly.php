@@ -2,6 +2,7 @@
 
 use Admin\CommonController;
 use Expressly\Event\MerchantEvent;
+use Expressly\Event\PasswordedEvent;
 
 require_once __DIR__ . '/../../../expressly/includes.php';
 
@@ -34,7 +35,6 @@ class ControllerModuleExpressly extends CommonController
             )
         );
 
-        $this->data['register'] = $this->url->link('module/expressly/register', 'token=' . $token, 'SSL');
         $this->data['action'] = $this->url->link('module/expressly/save', 'token=' . $token, 'SSL');
         $this->data['cancel'] = $this->url->link('extension/module', 'token=' . $token, 'SSL');
         $this->data['token'] = $token;
@@ -95,32 +95,65 @@ class ControllerModuleExpressly extends CommonController
 
     public function save()
     {
-        if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->validate()) {
-            $this->language->load('module/expressly');
+        $app = $this->getApp();
 
-            $app = $this->getApp();
-            $provider = $app['merchant.provider'];
-            $merchant = $provider->getMerchant();
+        try {
+            if ($this->request->server['REQUEST_METHOD'] == 'POST' && $this->validate()) {
+                $this->language->load('module/expressly');
 
-            $merchant
-                ->setName($this->request->post['expressly_shop_name'])
-                ->setImage($this->request->post['expressly_image'])
-                ->setTerms($this->request->post['expressly_terms'])
-                ->setPolicy($this->request->post['expressly_privacy'])
-                ->setDestination($this->request->post['expressly_destination'])
-                ->setOffer($this->request->post['expressly_offer'])
-                ->setPassword($this->request->post['expressly_password']);
+                $provider = $app['merchant.provider'];
+                $merchant = $provider->getMerchant();
 
-            $provider->setMerchant($merchant);
-            $dispatcher = $this->getDispatcher();
-            $event = new MerchantEvent($merchant);
-            $dispatcher->dispatch('merchant.update', $event);
+                $merchant
+                    ->setImage($this->request->post['expressly_image'])
+                    ->setTerms($this->request->post['expressly_terms'])
+                    ->setPolicy($this->request->post['expressly_privacy']);
+//                    ->setDestination($this->request->post['expressly_destination'])
+//                    ->setOffer($this->request->post['expressly_offer']);
 
-            $this->session->data['success'] = $this->language->get('text_success');
-            $this->cache->delete('expressly');
+                $provider->setMerchant($merchant);
+                $dispatcher = $this->getDispatcher();
+
+                $uuid = $merchant->getUuid();
+                $password = $merchant->getPassword();
+                $event = new PasswordedEvent($merchant);
+
+                if (empty($uuid) && empty($password)) {
+                    $event = new MerchantEvent($merchant);
+                    $dispatcher->dispatch('merchant.register', $event);
+                } else {
+                    $dispatcher->dispatch('merchant.update', $event);
+                }
+
+                if (!$event->isSuccessful()) {
+                    throw new \Exception(self::processError($event->getContent()));
+                }
+
+                if (empty($uuid) && empty($password)) {
+                    $content = $event->getContent();
+
+                    $merchant
+                        ->setUuid($content['merchantUuid'])
+                        ->setPassword($content['secretKey']);
+
+                    $this->session->data['success'] = $this->language->get('text_success_register');
+                } else {
+                    $this->session->data['success'] = $this->language->get('text_success_update');
+                }
+
+                $provider->setMerchant($merchant);
+
+                $this->cache->delete('expressly');
+            }
+        } catch (Buzz\Exception\RequestException $e) {
+            $app['logger']->addError((string)$e);
+            $this->error['warning'] = 'We had trouble talking to the server. The server could be down; please contact expressly.';
+        } catch (\Exception $e) {
+            $app['logger']->addError((string)$e);
+            $this->error['warning'] = (string)$e->getMessage();
         }
 
-        $this->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->redirect($this->url->link('module/expressly', 'token=' . $this->session->data['token'], 'SSL'));
     }
 
     protected function validate()
@@ -151,10 +184,38 @@ class ControllerModuleExpressly extends CommonController
             )
         );
 
-        return $this->sendRegister();
+        $this->redirect($this->url->link('module/expressly', 'token=' . $this->session->data['token'], 'SSL'));
     }
 
-    private function sendRegister()
+    public static function processError(Symfony\Component\EventDispatcher\Event $event)
+    {
+        $content = $event->getContent();
+        $message = array(
+            $content['description']
+        );
+
+        $addBulletpoints = function ($key, $title) use ($content, &$message) {
+            if (!empty($content[$key])) {
+                $message[] = '<br>';
+                $message[] = $title;
+                $message[] = '<ul>';
+
+                foreach ($content[$key] as $point) {
+                    $message[] = "<li>{$point}</li>";
+                }
+
+                $message[] = '</ul>';
+            }
+        };
+
+        // TODO: translatable
+        $addBulletpoints('causes', 'Possible causes:');
+        $addBulletpoints('actions', 'Possible resolutions:');
+
+        return implode('', $message);
+    }
+
+    public function register()
     {
         $app = $this->getApp();
 
@@ -178,52 +239,18 @@ class ControllerModuleExpressly extends CommonController
 
             $content = $event->getContent();
             $merchant
-                ->setUuid($content['uuid'])
+                ->setUuid($content['merchantUuid'])
                 ->setPassword($content['secretKey']);
 
             $provider->setMerchant($merchant);
         } catch (Buzz\Exception\RequestException $e) {
             $app['logger']->addError((string)$e);
             $this->data['error_warning'] = 'We had trouble talking to the server. Please contact expressly.';
-
-            return false;
         } catch (\Exception $e) {
             $app['logger']->addError((string)$e);
             $this->data['error_warning'] = $e->getMessage();
-
-            return false;
         }
 
-        return true;
-    }
-
-    public static function processError(Symfony\Component\EventDispatcher\Event $event)
-    {
-        $content = $event->getContent();
-        $message[] = $content['message'];
-
-        $addBulletpoints = function ($key) use ($content, $message) {
-            if (!empty($content[$key])) {
-                $message[] = '<ul>';
-
-                foreach ($content[$key] as $point) {
-                    $message[] = "<li>{$point}</li>";
-                }
-
-                $message[] = '</ul>';
-            }
-        };
-
-        $addBulletpoints('actions');
-        $addBulletpoints('causes');
-
-        return implode('', $message);
-    }
-
-    public function register()
-    {
-        $this->sendRegister();
-
-        $this->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->redirect($this->url->link('module/expressly', 'token=' . $this->session->data['token'], 'SSL'));
     }
 }

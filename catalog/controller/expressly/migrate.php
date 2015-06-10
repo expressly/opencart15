@@ -17,7 +17,7 @@ class ControllerExpresslyMigrate extends CommonController
         $dispatcher = $this->getDispatcher();
 
         $event = new CustomerMigrateEvent($this->getMerchant(), $uuid);
-        $dispatcher->dispatch('customer.migrate.start', $event);
+        $dispatcher->dispatch('customer.migrate.popup', $event);
 
         $this->data['response'] = $event->getResponse();
         $this->request->get['route'] = 'common/home';
@@ -48,18 +48,17 @@ class ControllerExpresslyMigrate extends CommonController
 
         try {
             $event = new CustomerMigrateEvent($this->getMerchant(), $uuid);
-            $dispatcher->dispatch('customer.migrate.complete', $event);
-            $response = $event->getResponse();
+            $dispatcher->dispatch('customer.migrate.data', $event);
             $json = $event->getContent();
 
-            if (!$response->isSuccessful()) {
-                $this->redirect('/');
+            if (!$event->isSuccessful()) {
+                throw new \Exception((string)$event->getContent());
             }
 
             $this->customer->logout();
             $this->cart->clear();
 
-            $email = $json['data']['email'];
+            $email = $json['migration']['data']['email'];
             $this->load->model('account/customer');
 
             if ($this->model_account_customer->getTotalCustomersByEmail($email) == 0) {
@@ -68,7 +67,7 @@ class ControllerExpresslyMigrate extends CommonController
                 $this->load->model('expressly/zone');
 
                 $password = md5('xly' . microtime());
-                $customer = $json['data']['customerData'];
+                $customer = $json['migration']['data']['customerData'];
                 $phone = !empty($customer['phones']) ? $customer['phones'][0]['number'] : '';
 
                 $shippingAddress = $customer['addresses'][$customer['shippingAddress']];
@@ -142,6 +141,8 @@ class ControllerExpresslyMigrate extends CommonController
                     'country_id' => !empty($country) ? $country['country_id'] : '',
                     'zone_id' => $zone['zone_id']
                 ));
+            } else {
+                $event = new CustomerMigrateEvent($this->getMerchant(), $uuid, CustomerMigrateEvent::EXISTING_CUSTOMER);
             }
 
             // Add item to cart

@@ -24,13 +24,8 @@
             </h1>
 
             <div class="buttons">
-                <?php if (!$registered): ?>
-                <a href="<?php echo $register; ?>" class="button">
-                    <?php echo $button_register; ?>
-                </a>
-                <?php endif; ?>
                 <a onclick="$('#form').submit();return false;" class="button">
-                    <?php echo $button_save; ?>
+                    <?php echo (!$registered ? $button_register : $button_save); ?>
                 </a>
                 <a href="<?php echo $cancel; ?>" class="button">
                     <?php echo $button_cancel; ?>
@@ -102,7 +97,7 @@
                     <tr>
                         <td><?php echo $password; ?></td>
                         <td>
-                            <input type="text" name="expressly_password" value="<?php echo $expressly_password; ?>" size="100"/>
+                            <input type="text" name="expressly_password" value="<?php echo $expressly_password; ?>" disabled size="100"/>
                         </td>
                     </tr>
                 </table>

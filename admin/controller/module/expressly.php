@@ -3,6 +3,7 @@
 use Admin\CommonController;
 use Expressly\Event\MerchantEvent;
 use Expressly\Event\PasswordedEvent;
+use Expressly\Exception\GenericException;
 
 require_once __DIR__ . '/../../../expressly/includes.php';
 
@@ -11,7 +12,7 @@ class ControllerModuleExpressly extends CommonController
     public function index()
     {
         $app = $this->getApp();
-        $merchant = $app['merchant.provider']->getMerchant();
+        $merchant = $this->getMerchant();
         $this->language->load('module/expressly');
         $token = $this->session->data['token'];
 
@@ -185,6 +186,27 @@ class ControllerModuleExpressly extends CommonController
         );
 
         $this->redirect($this->url->link('module/expressly', 'token=' . $this->session->data['token'], 'SSL'));
+    }
+
+    public function uninstall()
+    {
+        $this->load->model('setting/setting');
+        $this->model_setting_setting->deleteSetting('expressly_preferences');
+
+        $app = $this->getApp();
+        $merchant = $this->getMerchant();
+
+        try {
+            $event = new PasswordedEvent($merchant);
+            $dispatcher = $this->getDispatcher();
+            $dispatcher->dispatch('merchant.delete', $event);
+
+            if (!$event->isSuccessful()) {
+                throw new GenericException('Failed to uninstall');
+            }
+        } catch (\Exception $e) {
+            $app['logger']->addError((string)$e);
+        }
     }
 
     public static function processError(Symfony\Component\EventDispatcher\Event $event)

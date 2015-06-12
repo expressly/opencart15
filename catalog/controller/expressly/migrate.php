@@ -2,6 +2,7 @@
 
 use Catalog\CommonController;
 use Expressly\Event\CustomerMigrateEvent;
+use Expressly\Exception\GenericException;
 
 require_once __DIR__ . '/../../../expressly/includes.php';
 
@@ -20,10 +21,16 @@ class ControllerExpresslyMigrate extends CommonController
 
         try {
             $dispatcher->dispatch('customer.migrate.popup', $event);
+            if (!$event->isSuccessful()) {
+                throw new GenericException($event->getContent());
+            }
         } catch (\Exception $e) {
             $app = $this->getApp();
             $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
+
+            $this->redirect('/');
         }
+
 
         $this->data['response'] = $event->getResponse();
         $this->request->get['route'] = 'common/home';

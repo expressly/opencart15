@@ -10,7 +10,7 @@
         <?php } ?>
     </div>
 
-    <?php if ($error_warning) { ?>
+    <?php if (!empty($error_warning)) { ?>
     <div class="warning">
         <?php echo $error_warning; ?>
     </div>

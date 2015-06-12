@@ -11,7 +11,6 @@ class ControllerModuleExpressly extends CommonController
 {
     public function index()
     {
-        $app = $this->getApp();
         $merchant = $this->getMerchant();
         $this->language->load('module/expressly');
         $token = $this->session->data['token'];
@@ -79,7 +78,6 @@ class ControllerModuleExpressly extends CommonController
         $this->data['button_save'] = $this->language->get('button_save');
         $this->data['button_cancel'] = $this->language->get('button_cancel');
 
-        $this->data['error_warning'] = '';
         if (isset($this->error['warning'])) {
             $this->data['error_warning'] = $this->error['warning'];
         }
@@ -148,19 +146,19 @@ class ControllerModuleExpressly extends CommonController
             }
         } catch (Buzz\Exception\RequestException $e) {
             $app['logger']->addError((string)$e);
-            $this->error['warning'] = 'We had trouble talking to the server. The server could be down; please contact expressly.';
+            $this->data['error_warning'] = 'We had trouble talking to the server. The server could be down; please contact expressly.';
         } catch (\Exception $e) {
             $app['logger']->addError((string)$e);
-            $this->error['warning'] = (string)$e->getMessage();
+            $this->data['error_warning'] = (string)$e->getMessage();
         }
 
-        $this->redirect($this->url->link('module/expressly', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->index();
     }
 
     protected function validate()
     {
         if (!$this->user->hasPermission('modify', 'module/expressly')) {
-            $this->error['warning'] = $this->language->get('error_permission');
+            $this->data['error_warning'] = $this->language->get('error_permission');
         }
 
         return !$this->error ? true : false;
@@ -185,7 +183,7 @@ class ControllerModuleExpressly extends CommonController
             )
         );
 
-        $this->redirect($this->url->link('module/expressly', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->index();
     }
 
     public function uninstall()
@@ -273,6 +271,6 @@ class ControllerModuleExpressly extends CommonController
             $this->data['error_warning'] = $e->getMessage();
         }
 
-        $this->redirect($this->url->link('module/expressly', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->index();
     }
 }

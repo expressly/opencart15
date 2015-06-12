@@ -4,9 +4,7 @@ use Catalog\CommonController;
 use Expressly\Entity\Address;
 use Expressly\Entity\Customer;
 use Expressly\Entity\Email;
-use Expressly\Entity\Merchant;
 use Expressly\Entity\Phone;
-use Expressly\Event\ResponseEvent;
 use Expressly\Presenter\CustomerMigratePresenter;
 use Expressly\Presenter\PingPresenter;
 
@@ -73,7 +71,8 @@ class ControllerExpresslyDispatcher extends CommonController
         $customer = new Customer();
         $customer
             ->setFirstName($ocCustomer['firstname'])
-            ->setLastName($ocCustomer['lastname']);
+            ->setLastName($ocCustomer['lastname'])
+            ->setDateUpdated(new \DateTime($ocCustomer['date_added']));
 
         $email = new Email();
         $email

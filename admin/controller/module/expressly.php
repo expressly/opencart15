@@ -145,10 +145,10 @@ class ControllerModuleExpressly extends CommonController
                 $this->cache->delete('expressly');
             }
         } catch (Buzz\Exception\RequestException $e) {
-            $app['logger']->addError((string)$e);
+            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = 'We had trouble talking to the server. The server could be down; please contact expressly.';
         } catch (\Exception $e) {
-            $app['logger']->addError((string)$e);
+            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = (string)$e->getMessage();
         }
 
@@ -203,7 +203,7 @@ class ControllerModuleExpressly extends CommonController
                 throw new GenericException('Failed to uninstall');
             }
         } catch (\Exception $e) {
-            $app['logger']->addError((string)$e);
+            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
         }
     }
 
@@ -264,10 +264,10 @@ class ControllerModuleExpressly extends CommonController
 
             $provider->setMerchant($merchant);
         } catch (Buzz\Exception\RequestException $e) {
-            $app['logger']->addError((string)$e);
+            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = 'We had trouble talking to the server. Please contact expressly.';
         } catch (\Exception $e) {
-            $app['logger']->addError((string)$e);
+            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = $e->getMessage();
         }
 

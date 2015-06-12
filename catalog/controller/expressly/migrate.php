@@ -17,7 +17,13 @@ class ControllerExpresslyMigrate extends CommonController
         $dispatcher = $this->getDispatcher();
 
         $event = new CustomerMigrateEvent($this->getMerchant(), $uuid);
-        $dispatcher->dispatch('customer.migrate.popup', $event);
+
+        try {
+            $dispatcher->dispatch('customer.migrate.popup', $event);
+        } catch (\Exception $e) {
+            $app = $this->getApp();
+            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
+        }
 
         $this->data['response'] = $event->getResponse();
         $this->request->get['route'] = 'common/home';
@@ -156,7 +162,7 @@ class ControllerExpresslyMigrate extends CommonController
 
             $dispatcher->dispatch('customer.migrate.success', $event);
         } catch (\Exception $e) {
-            $app['logger']->addError((string)$e);
+            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
         }
 
         $this->redirect('/');

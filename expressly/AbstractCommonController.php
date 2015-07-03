@@ -2,6 +2,7 @@
 
 use Expressly\Client;
 use Expressly\Entity\MerchantType;
+use Expressly\Event\ResponseEvent;
 
 abstract class AbstractCommonController extends Controller
 {
@@ -19,6 +20,36 @@ abstract class AbstractCommonController extends Controller
 
         $this->app = $app;
         $this->dispatcher = $this->app['dispatcher'];
+    }
+
+
+
+    public static function processError(Symfony\Component\EventDispatcher\Event $event)
+    {
+        $content = $event->getContent();
+        $message = array(
+            $content['description']
+        );
+
+        $addBulletpoints = function ($key, $title) use ($content, &$message) {
+            if (!empty($content[$key])) {
+                $message[] = '<br>';
+                $message[] = $title;
+                $message[] = '<ul>';
+
+                foreach ($content[$key] as $point) {
+                    $message[] = "<li>{$point}</li>";
+                }
+
+                $message[] = '</ul>';
+            }
+        };
+
+        // TODO: translatable
+        $addBulletpoints('causes', 'Possible causes:');
+        $addBulletpoints('actions', 'Possible resolutions:');
+
+        return implode('', $message);
     }
 
     protected abstract function setOverrides($app, $registry);

@@ -1,4 +1,7 @@
 <?php
 
 echo $home;
-echo $response;
+
+if (isset($response)) {
+    echo $response;
+}

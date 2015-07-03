@@ -4,7 +4,12 @@ use Catalog\CommonController;
 use Expressly\Entity\Address;
 use Expressly\Entity\Customer;
 use Expressly\Entity\Email;
+use Expressly\Entity\Invoice;
+use Expressly\Entity\Order;
 use Expressly\Entity\Phone;
+use Expressly\Exception\ExceptionFormatter;
+use Expressly\Presenter\BatchCustomerPresenter;
+use Expressly\Presenter\BatchInvoicePresenter;
 use Expressly\Presenter\CustomerMigratePresenter;
 use Expressly\Presenter\PingPresenter;
 
@@ -20,24 +25,44 @@ class ControllerExpresslyDispatcher extends CommonController
 
         $query = $this->request->get['query'];
 
-        if (preg_match("/^\/?expressly\/api\/ping\/?$/", $query)) {
-            $this->ping();
+        switch ($this->request->server['REQUEST_METHOD']) {
+            case 'GET':
+                if (preg_match("/^\/?expressly\/api\/ping\/?$/", $query)) {
+                    $this->ping();
 
-            return;
-        }
+                    return;
+                }
 
-        if (preg_match("/^\/?expressly\/api\/user\/([\w-\.]+@[\w-\.]+)\/?$/", $query, $matches)) {
-            $email = array_pop($matches);
-            $this->retrieveUserByEmail($email);
+                if (preg_match("/^\/?expressly\/api\/user\/([\w-\.]+@[\w-\.]+)\/?$/", $query, $matches)) {
+                    $email = array_pop($matches);
+                    $data = $this->retrieveUserByEmail($email);
+                    $this->response->setOutput(json_encode($data));
 
-            return;
-        }
+                    return;
+                }
 
-        if (preg_match("/^\/?expressly\/api\/([\w-]+)\/?$/", $query, $matches)) {
-            $key = array_pop($matches);
-            $this->redirect($this->url->link('expressly/migrate/popup', "uuid={$key}", 'SSL'));
+                if (preg_match("/^\/?expressly\/api\/([\w-]+)\/?$/", $query, $matches)) {
+                    $key = array_pop($matches);
+                    $this->redirect($this->url->link('expressly/migrate/popup', "uuid={$key}", 'SSL'));
 
-            return;
+                    return;
+                }
+                break;
+            case 'POST':
+                if (preg_match("/^\/?expressly\/api\/batch\/invoice\/?$/", $query, $matches)) {
+                    $data = $this->getBulkInvoices();
+                    $this->response->setOutput(json_encode($data));
+
+                    return;
+                }
+
+                if (preg_match("/^\/?expressly\/api\/batch\/customer\/?$/", $query, $matches)) {
+                    $data = $this->getBulkCustomers();
+                    $this->response->setOutput(json_encode($data));
+
+                    return;
+                }
+                break;
         }
 
         $this->redirect('/');
@@ -55,9 +80,7 @@ class ControllerExpresslyDispatcher extends CommonController
         $ocCustomer = $this->model_account_customer->getCustomerByEmail($emailAddress);
 
         if (empty($ocCustomer)) {
-            $this->response->setOutput(json_encode(array()));
-
-            return;
+            return array();
         }
 
         /*
@@ -117,6 +140,106 @@ class ControllerExpresslyDispatcher extends CommonController
         $merchant = $app['merchant.provider']->getMerchant();
         $response = new CustomerMigratePresenter($merchant, $customer, $emailAddress, $ocCustomer['customer_id']);
 
-        $this->response->setOutput(json_encode($response->toArray()));
+        return $response->toArray();
+    }
+
+    public function getBulkCustomers()
+    {
+        $json = file_get_contents('php://input');
+        $json = json_decode($json);
+
+        $customers = array();
+
+        try {
+            $this->load->model('account/customer');
+
+            foreach ($json->emails as $customer) {
+                $ocCustomer = $this->model_account_customer->getCustomerByEmail($customer);
+
+                if (empty($ocCustomer)) {
+                    continue;
+                }
+                if (!$ocCustomer['status']) {
+                    $customers['deleted'][] = $customer;
+                    continue;
+                }
+                if (!$ocCustomer['approved']) {
+                    $customers['pending'][] = $customer;
+                    continue;
+                }
+
+                $customers['existing'][] = $customer;
+            }
+        } catch (\Exception $e) {
+            $app = $this->getApp();
+            $app['logger']->error(ExceptionFormatter::format($e));
+        }
+
+        // TODO: use static names defined once for array indexes
+        $presenter = new BatchCustomerPresenter($customers);
+
+        return $presenter->toArray();
+    }
+
+    public function getBulkInvoices()
+    {
+        $json = file_get_contents('php://input');
+        $json = json_decode($json);
+
+        $invoices = array();
+
+        try {
+            $this->load->model('expressly/order');
+            $this->load->model('expressly/voucher');
+            $this->load->model('account/order');
+
+            foreach ($json->customers as $customer) {
+                $ocOrders = $this->model_expressly_order->getOrderIdByCustomerAndDateRange($customer->email, $customer->from, $customer->to);
+
+                if (empty($ocOrders)) {
+                    continue;
+                }
+
+                $invoice = new Invoice();
+                $invoice->setEmail($customer->email);
+
+                foreach ($ocOrders as $ocOrder) {
+                    $total = 0.0;
+                    $tax = 0.0;
+                    $productCount = 0;
+                    $ocProducts = $this->model_account_order->getOrderProducts($ocOrder['order_id']);
+
+                    foreach ($ocProducts as $ocProduct) {
+                        $total += (double)$ocProduct['price'];
+                        $tax += (double)$ocProduct['tax'];
+                        $productCount++;
+                    }
+
+                    $order = new Order();
+                    $order
+                        ->setId($ocOrder['invoice_prefix'] . $ocOrder['invoice_no'])
+                        ->setDate(new \DateTime($ocOrder['date_added']))
+                        ->setCurrency($ocOrder['currency_code'])
+                        ->setTotal($total, $tax)
+                        ->setItemCount($productCount);
+
+                    $ocVoucher = $this->model_expressly_voucher->getVoucherCodeByOrderId($ocOrder['order_id']);
+                    if (!empty($ocVoucher)) {
+                        $order->setCoupon($ocVoucher['code']);
+                    }
+
+                    $invoice->addOrder($order);
+                }
+
+                $invoices[] = $invoice;
+            }
+        } catch (\Exception $e) {
+            $app = $this->getApp();
+            $app['logger']->error(ExceptionFormatter::format($e));
+        }
+
+        $presenter = new BatchInvoicePresenter($invoices);
+
+        return $presenter->toArray();
     }
 }

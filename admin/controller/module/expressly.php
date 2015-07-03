@@ -145,10 +145,10 @@ class ControllerModuleExpressly extends CommonController
                 $this->cache->delete('expressly');
             }
         } catch (Buzz\Exception\RequestException $e) {
-            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
+            $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = 'We had trouble talking to the server. The server could be down; please contact expressly.';
         } catch (\Exception $e) {
-            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
+            $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = (string)$e->getMessage();
         }
 
@@ -168,6 +168,9 @@ class ControllerModuleExpressly extends CommonController
     {
         $this->load->model('setting/setting');
         $url = $this->config->get('config_url');
+        if (empty($url)) {
+            $url = $_SERVER['REQUEST_METHOD'] . $_SERVER['REMOTE_ADDR'];
+        }
         $this->model_setting_setting->editSetting(
             'expressly_preferences',
             array(
@@ -203,36 +206,8 @@ class ControllerModuleExpressly extends CommonController
                 throw new GenericException('Failed to uninstall');
             }
         } catch (\Exception $e) {
-            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
+            $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
         }
-    }
-
-    public static function processError(Symfony\Component\EventDispatcher\Event $event)
-    {
-        $content = $event->getContent();
-        $message = array(
-            $content['description']
-        );
-
-        $addBulletpoints = function ($key, $title) use ($content, &$message) {
-            if (!empty($content[$key])) {
-                $message[] = '<br>';
-                $message[] = $title;
-                $message[] = '<ul>';
-
-                foreach ($content[$key] as $point) {
-                    $message[] = "<li>{$point}</li>";
-                }
-
-                $message[] = '</ul>';
-            }
-        };
-
-        // TODO: translatable
-        $addBulletpoints('causes', 'Possible causes:');
-        $addBulletpoints('actions', 'Possible resolutions:');
-
-        return implode('', $message);
     }
 
     public function register()
@@ -264,10 +239,10 @@ class ControllerModuleExpressly extends CommonController
 
             $provider->setMerchant($merchant);
         } catch (Buzz\Exception\RequestException $e) {
-            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
+            $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = 'We had trouble talking to the server. Please contact expressly.';
         } catch (\Exception $e) {
-            $app['logger']->addError(Expressly\Exception\ExceptionFormatter::format($e));
+            $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
             $this->data['error_warning'] = $e->getMessage();
         }
 

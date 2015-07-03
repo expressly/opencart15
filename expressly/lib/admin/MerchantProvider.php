@@ -3,7 +3,6 @@
 namespace Admin;
 
 use Expressly\Entity\Merchant;
-use Expressly\Provider\MerchantProviderInterface;
 
 class MerchantProvider extends \AbstractMerchantProvider
 {

@@ -8,6 +8,7 @@ use Expressly\Entity\Invoice;
 use Expressly\Entity\Order;
 use Expressly\Entity\Phone;
 use Expressly\Exception\ExceptionFormatter;
+use Expressly\Exception\GenericException;
 use Expressly\Presenter\BatchCustomerPresenter;
 use Expressly\Presenter\BatchInvoicePresenter;
 use Expressly\Presenter\CustomerMigratePresenter;
@@ -151,24 +152,28 @@ class ControllerExpresslyDispatcher extends CommonController
         $customers = array();
 
         try {
+            if (!property_exists($json, 'emails')) {
+                throw new GenericException('Invalid JSON input');
+            }
+
             $this->load->model('account/customer');
 
-            foreach ($json->emails as $customer) {
-                $ocCustomer = $this->model_account_customer->getCustomerByEmail($customer);
+            foreach ($json->emails as $email) {
+                $ocCustomer = $this->model_account_customer->getCustomerByEmail($email);
 
                 if (empty($ocCustomer)) {
                     continue;
                 }
                 if (!$ocCustomer['status']) {
-                    $customers['deleted'][] = $customer;
+                    $customers['deleted'][] = $email;
                     continue;
                 }
                 if (!$ocCustomer['approved']) {
-                    $customers['pending'][] = $customer;
+                    $customers['pending'][] = $email;
                     continue;
                 }
 
-                $customers['existing'][] = $customer;
+                $customers['existing'][] = $email;
             }
         } catch (\Exception $e) {
             $app = $this->getApp();
@@ -189,12 +194,21 @@ class ControllerExpresslyDispatcher extends CommonController
         $invoices = array();
 
         try {
+            if (!property_exists($json, 'customers')) {
+                throw new GenericException('Invalid JSON input');
+            }
+
             $this->load->model('expressly/order');
             $this->load->model('expressly/voucher');
             $this->load->model('account/order');
 
             foreach ($json->customers as $customer) {
-                $ocOrders = $this->model_expressly_order->getOrderIdByCustomerAndDateRange($customer->email, $customer->from, $customer->to);
+                if (!property_exists($customer, 'email')) {
+                    continue;
+                }
+
+                $ocOrders = $this->model_expressly_order->getOrderIdByCustomerAndDateRange($customer->email,
+                    $customer->from, $customer->to);
 
                 if (empty($ocOrders)) {
                     continue;

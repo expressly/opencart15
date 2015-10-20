@@ -18,3 +18,15 @@ $_['offer'] = 'Show Offer';
 $_['password'] = 'Password';
 
 $_['error_permission'] = 'You do not have permission to change Expressly preferences.';
+
+// Text
+$_['text_content_top']    = 'Content Top';
+$_['text_content_bottom'] = 'Content Bottom';
+$_['text_column_left']    = 'Column Left';
+$_['text_column_right']   = 'Column Right';
+
+// Entry
+$_['entry_layout']        = 'Layout:';
+$_['entry_position']      = 'Position:';
+$_['entry_status']        = 'Status:';
+$_['entry_sort_order']    = 'Sort Order:';

@@ -1,5 +1,5 @@
 .idea
-expressly/vendor
+
 node_modules
 *.log
 .sass-cache
@@ -14,3 +14,16 @@ log/*.log
 
 robots.txt
 sitemap.xml
+
+# ==========================
+# Excludes for OpenCart 1.5
+# ==========================
+/download
+/expressly/vendor
+/image
+/system
+/.htaccess.txt
+/config.php
+/index.php
+/php.ini
+/README.md

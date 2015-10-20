@@ -1,7 +1,1 @@
-<?php
-
-echo $home;
-
-if (isset($response)) {
-    echo $response;
-}
+<h1><?php echo $banner; ?></h1>

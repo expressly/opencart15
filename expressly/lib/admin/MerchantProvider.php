@@ -12,15 +12,9 @@ class MerchantProvider extends \AbstractMerchantProvider
         $this->model_setting_setting->editSetting(
             'expressly_preferences',
             array(
-                'uuid' => $merchant->getUuid(),
-                'image' => $merchant->getImage(),
-                'terms' => $merchant->getTerms(),
-                'policy' => $merchant->getPolicy(),
-                'host' => $merchant->getHost(),
-                'destination' => $merchant->getDestination(),
-                'offer' => (int)$merchant->getOffer(),
-                'password' => $merchant->getPassword(),
-                'path' => $merchant->getPath()
+                static::APIKEY => $merchant->getApiKey(),
+                static::HOST => $merchant->getHost(),
+                static::PATH => $merchant->getPath()
             )
         );
 

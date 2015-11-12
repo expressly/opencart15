@@ -7,6 +7,10 @@ abstract class AbstractMerchantProvider extends \Controller implements MerchantP
 {
     protected $merchant;
 
+    const APIKEY = 'apikey';
+    const HOST = 'host';
+    const PATH = 'path';
+
     public function __construct($registry)
     {
         parent::__construct($registry);
@@ -24,16 +28,9 @@ abstract class AbstractMerchantProvider extends \Controller implements MerchantP
         // Assumption to whether array is completely full, or not at all is valid
         if (!empty($preferences)) {
             $merchant
-                ->setName($this->config->get('config_title'))
-                ->setUuid($preferences['uuid'])
-                ->setImage($preferences['image'])
-                ->setTerms($preferences['terms'])
-                ->setPolicy($preferences['policy'])
-                ->setDestination($preferences['destination'])
-                ->setHost($preferences['host'])
-                ->setOffer($preferences['offer'])
-                ->setPassword($preferences['password'])
-                ->setPath($preferences['path']);
+                ->setApiKey($preferences[static::APIKEY])
+                ->setHost($preferences[static::HOST])
+                ->setPath($preferences[static::PATH]);
         }
 
         $this->merchant = $merchant;

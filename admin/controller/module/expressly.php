@@ -4,6 +4,8 @@ use Admin\CommonController;
 use Expressly\Event\MerchantEvent;
 use Expressly\Event\PasswordedEvent;
 use Expressly\Exception\GenericException;
+use Expressly\Exception\InvalidAPIKeyException;
+use Expressly\Subscriber\MerchantSubscriber;
 
 require_once __DIR__ . '/../../../expressly/includes.php';
 
@@ -54,24 +56,23 @@ class ControllerModuleExpressly extends CommonController
         $this->data['text_content'] = 'Expressly Content';
 
         // Language
-
-        $this->data['text_enabled']  = $this->language->get('text_enabled');
+        $this->data['text_enabled'] = $this->language->get('text_enabled');
         $this->data['text_disabled'] = $this->language->get('text_disabled');
 
-        $this->data['text_content_top']    = $this->language->get('text_content_top');
+        $this->data['text_content_top'] = $this->language->get('text_content_top');
         $this->data['text_content_bottom'] = $this->language->get('text_content_bottom');
-        $this->data['text_column_left']    = $this->language->get('text_column_left');
-        $this->data['text_column_right']   = $this->language->get('text_column_right');
+        $this->data['text_column_left'] = $this->language->get('text_column_left');
+        $this->data['text_column_right'] = $this->language->get('text_column_right');
 
-        $this->data['entry_layout']     = $this->language->get('entry_layout');
-        $this->data['entry_position']   = $this->language->get('entry_position');
-        $this->data['entry_status']     = $this->language->get('entry_status');
+        $this->data['entry_layout'] = $this->language->get('entry_layout');
+        $this->data['entry_position'] = $this->language->get('entry_position');
+        $this->data['entry_status'] = $this->language->get('entry_status');
         $this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
-        $this->data['button_save']       = $this->language->get('button_save');
-        $this->data['button_cancel']     = $this->language->get('button_cancel');
+        $this->data['button_save'] = $this->language->get('button_save');
+        $this->data['button_cancel'] = $this->language->get('button_cancel');
         $this->data['button_add_module'] = $this->language->get('button_add_module');
-        $this->data['button_remove']     = $this->language->get('button_remove');
+        $this->data['button_remove'] = $this->language->get('button_remove');
 
         $this->data['text_enabled'] = $this->language->get('text_enabled');
         $this->data['text_disabled'] = $this->language->get('text_disabled');
@@ -85,51 +86,13 @@ class ControllerModuleExpressly extends CommonController
         $this->data['entry_status'] = $this->language->get('entry_status');
         $this->data['entry_sort_order'] = $this->language->get('entry_sort_order');
 
-        // ===
+        $this->data['expressly_apikey'] = $merchant->getApiKey();
 
-        $this->data['expressly_shop_name'] = $merchant->getName();
-        $this->data['expressly_image'] = $merchant->getImage();
-        $this->data['expressly_terms'] = $merchant->getTerms();
-        $this->data['expressly_privacy'] = $merchant->getPolicy();
-        $this->data['expressly_destination'] = $merchant->getDestination();
-        $this->data['expressly_offer'] = (bool)$merchant->getOffer();
-        $this->data['expressly_password'] = $merchant->getPassword();
+        $this->data['apikey'] = $this->language->get('apikey');
+        $this->data['apikey_comment'] = $this->language->get('apikey_comment');
 
-        $uuid = $merchant->getUuid();
-        $password = $merchant->getPassword();
-        $this->data['registered'] = empty($uuid) && empty($password) ? false : true;
-
-        $this->data['shop_name'] = $this->language->get('shop_name');
-        $this->data['image'] = $this->language->get('image');
-        $this->data['image_url'] = $merchant->getImage();
-        $this->data['image_comment'] = sprintf(
-            $this->language->get('image_comment'),
-            $merchant->getImage()
-        );
-        $this->data['terms'] = $this->language->get('terms');
-        $this->data['terms_comment'] = sprintf(
-            $this->language->get('terms_comment'),
-            $merchant->getTerms()
-        );
-        $this->data['privacy'] = $this->language->get('privacy');
-        $this->data['privacy_comment'] = sprintf(
-            $this->language->get('privacy_comment'),
-            $merchant->getPolicy()
-        );
-        //$this->data['destination'] = $this->language->get('destination');
-        //$this->data['offer'] = $this->language->get('offer');
-        $this->data['password'] = $this->language->get('password');
-        $this->data['button_register'] = $this->language->get('button_register');
         $this->data['button_save'] = $this->language->get('button_save');
         $this->data['button_cancel'] = $this->language->get('button_cancel');
-
-        $this->data['modules'] = array();
-
-        if (isset($this->request->post['expressly_module'])) {
-            $this->data['modules'] = $this->request->post['expressly_module'];
-        } elseif ($this->config->get('expressly_module')) {
-            $this->data['modules'] = $this->config->get('expressly_module');
-        }
 
         $this->load->model('design/layout');
 
@@ -159,45 +122,20 @@ class ControllerModuleExpressly extends CommonController
 
                 $provider = $app['merchant.provider'];
                 $merchant = $provider->getMerchant();
-
-                $merchant
-                    ->setImage($this->request->post['expressly_image'])
-                    ->setTerms($this->request->post['expressly_terms'])
-                    ->setPolicy($this->request->post['expressly_privacy']);
-//                    ->setDestination($this->request->post['expressly_destination'])
-//                    ->setOffer($this->request->post['expressly_offer']);
-
+                $apiKey = $this->request->post['expressly_apikey'];
+                $merchant->setApiKey($apiKey);
                 $provider->setMerchant($merchant);
-                $dispatcher = $this->getDispatcher();
 
-                $uuid = $merchant->getUuid();
-                $password = $merchant->getPassword();
+                $dispatcher = $this->getDispatcher();
                 $event = new PasswordedEvent($merchant);
 
-                if (empty($uuid) && empty($password)) {
-                    $event = new MerchantEvent($merchant);
-                    $dispatcher->dispatch('merchant.register', $event);
-                } else {
-                    $dispatcher->dispatch('merchant.update', $event);
-                }
+                $dispatcher->dispatch(MerchantSubscriber::MERCHANT_REGISTER, $event);
 
                 if (!$event->isSuccessful()) {
-                    throw new \Exception(self::processError($event));
+                    throw new InvalidAPIKeyException();
                 }
 
-                if (empty($uuid) && empty($password)) {
-                    $content = $event->getContent();
-
-                    $merchant
-                        ->setUuid($content['merchantUuid'])
-                        ->setPassword($content['secretKey']);
-
-                    $this->session->data['success'] = $this->language->get('text_success_register');
-                } else {
-                    $this->session->data['success'] = $this->language->get('text_success_update');
-                }
-
-                $provider->setMerchant($merchant);
+                $this->session->data['success'] = $this->language->get('text_success_register');
 
                 $this->cache->delete('expressly');
             }
@@ -226,19 +164,13 @@ class ControllerModuleExpressly extends CommonController
         $this->load->model('setting/setting');
         $url = $this->config->get('config_url');
         if (empty($url)) {
-            $url = $_SERVER['REQUEST_METHOD'] . $_SERVER['REMOTE_ADDR'];
+            $url = 'https://' . $_SERVER['REMOTE_ADDR'];
         }
         $this->model_setting_setting->editSetting(
             'expressly_preferences',
             array(
-                'uuid' => '',
-                'image' => sprintf('%simage/%s', $url, $this->config->get('config_logo')),
-                'terms' => $url . 'index.php?route=information/information&information_id=5',
-                'policy' => $url . 'index.php?route=information/information&information_id=3',
+                'apikey' => '',
                 'host' => $url,
-                'destination' => '/',
-                'offer' => (int)true,
-                'password' => '',
                 'path' => '?route=expressly/dispatcher/index&query='
             )
         );
@@ -257,7 +189,7 @@ class ControllerModuleExpressly extends CommonController
         try {
             $event = new PasswordedEvent($merchant);
             $dispatcher = $this->getDispatcher();
-            $dispatcher->dispatch('merchant.delete', $event);
+            $dispatcher->dispatch(MerchantSubscriber::MERCHANT_DELETE, $event);
 
             if (!$event->isSuccessful()) {
                 throw new GenericException('Failed to uninstall');

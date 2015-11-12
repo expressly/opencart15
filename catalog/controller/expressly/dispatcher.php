@@ -7,12 +7,21 @@ use Expressly\Entity\Email;
 use Expressly\Entity\Invoice;
 use Expressly\Entity\Order;
 use Expressly\Entity\Phone;
+use Expressly\Entity\Route;
 use Expressly\Exception\ExceptionFormatter;
 use Expressly\Exception\GenericException;
 use Expressly\Presenter\BatchCustomerPresenter;
 use Expressly\Presenter\BatchInvoicePresenter;
 use Expressly\Presenter\CustomerMigratePresenter;
 use Expressly\Presenter\PingPresenter;
+use Expressly\Presenter\RegisteredPresenter;
+use Expressly\Route\BatchCustomer;
+use Expressly\Route\BatchInvoice;
+use Expressly\Route\CampaignMigration;
+use Expressly\Route\CampaignPopup;
+use Expressly\Route\Ping;
+use Expressly\Route\Registered;
+use Expressly\Route\UserData;
 
 require_once __DIR__ . '/../../../expressly/includes.php';
 
@@ -20,58 +29,53 @@ class ControllerExpresslyDispatcher extends CommonController
 {
     public function index()
     {
-        if (empty($this->request->get['query'])) {
-            $this->redirect('/');
-        }
-
         $query = $this->request->get['query'];
 
-        switch ($this->request->server['REQUEST_METHOD']) {
-            case 'GET':
-                if (preg_match("/^\/?expressly\/api\/ping\/?$/", $query)) {
+        $route = $this->getResolver()->process($query);
+
+        if ($route instanceof Route) {
+            switch ($route->getName()) {
+                case Ping::getName():
                     $this->ping();
-
-                    return;
-                }
-
-                if (preg_match("/^\/?expressly\/api\/user\/([\w-\.]+@[\w-\.]+)\/?$/", $query, $matches)) {
-                    $email = array_pop($matches);
-                    $data = $this->retrieveUserByEmail($email);
-                    $this->response->setOutput(json_encode($data));
-
-                    return;
-                }
-
-                if (preg_match("/^\/?expressly\/api\/([\w-]+)\/?$/", $query, $matches)) {
-                    $key = array_pop($matches);
-                    $this->redirect($this->url->link('expressly/migrate/popup', "uuid={$key}", 'SSL'));
-
-                    return;
-                }
-                break;
-            case 'POST':
-                if (preg_match("/^\/?expressly\/api\/batch\/invoice\/?$/", $query, $matches)) {
-                    $data = $this->getBulkInvoices();
-                    $this->response->setOutput(json_encode($data));
-
-                    return;
-                }
-
-                if (preg_match("/^\/?expressly\/api\/batch\/customer\/?$/", $query, $matches)) {
-                    $data = $this->getBulkCustomers();
-                    $this->response->setOutput(json_encode($data));
-
-                    return;
-                }
-                break;
+                    break;
+                case Registered::getName():
+                    $this->registered();
+                    break;
+                case UserData::getName():
+                    $data = $route->getData();
+                    $this->response->setOutput(json_encode($this->retrieveUserByEmail($data['email'])));
+                    break;
+                case CampaignPopup::getName():
+                    $data = $route->getData();
+                    $this->redirect($this->url->link('expressly/migrate/popup', "uuid={$data['uuid']}", 'SSL'));
+                    break;
+                case CampaignMigration::getName():
+                    $data = $route->getData();
+                    $this->redirect($this->url->link('expressly/migrate/complete', "uuid={$data['uuid']}", 'SSL'));
+                    break;
+                case BatchCustomer::getName():
+                    $this->response->setOutput(json_encode($this->getBulkCustomers()));
+                    break;
+                case BatchInvoice::getName():
+                    $this->response->setOutput(json_encode($this->getBulkInvoices()));
+                    break;
+            }
+        } else {
+            if (http_response_code() != 401) {
+                $this->redirect('/');
+            }
         }
-
-        $this->redirect('/');
     }
 
     private function ping()
     {
         $presenter = new PingPresenter();
+        $this->response->setOutput(json_encode($presenter->toArray()));
+    }
+
+    private function registered()
+    {
+        $presenter = new RegisteredPresenter();
         $this->response->setOutput(json_encode($presenter->toArray()));
     }
 

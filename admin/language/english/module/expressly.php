@@ -6,27 +6,7 @@ $_['button_register'] = 'Register plugin';
 $_['text_module'] = 'Modules';
 $_['text_success'] = 'Success: You have updated your Expressly preferences.';
 
-$_['shop_name'] = 'Shop Name';
-$_['image'] = 'Store Image URL';
-$_['image_comment'] = 'URL for the logo associated with your store; the preview on the right will show what your logo will look like in our prompt. <a href="%s">Check</a>';
-$_['terms'] = 'Terms URL';
-$_['terms_comment'] = 'URL for the Terms & Conditions page for your store. <a href="%s">Check</a>';
-$_['privacy'] = 'Privacy Policy URL';
-$_['privacy_comment'] = 'URL for the Privacy Policy page for your store. <a href="%s">Check</a>';
-$_['destination'] = 'Destination';
-$_['offer'] = 'Show Offer';
-$_['password'] = 'Password';
+$_['apikey'] = 'API Key';
+$_['apikey_comment'] = 'API Key provided from our <a href="https://buyexpressly.com/#/install#api">portal</a>. If you do not have an API Key, please follow the previous link for instructions on how to create one.';
 
 $_['error_permission'] = 'You do not have permission to change Expressly preferences.';
-
-// Text
-$_['text_content_top']    = 'Content Top';
-$_['text_content_bottom'] = 'Content Bottom';
-$_['text_column_left']    = 'Column Left';
-$_['text_column_right']   = 'Column Right';
-
-// Entry
-$_['entry_layout']        = 'Layout:';
-$_['entry_position']      = 'Position:';
-$_['entry_status']        = 'Status:';
-$_['entry_sort_order']    = 'Sort Order:';

@@ -3,6 +3,7 @@
 use Catalog\CommonController;
 use Expressly\Event\CustomerMigrateEvent;
 use Expressly\Exception\GenericException;
+use Expressly\Subscriber\CustomerMigrationSubscriber;
 
 require_once __DIR__ . '/../../../expressly/includes.php';
 
@@ -19,7 +20,7 @@ class ControllerExpresslyMigrate extends CommonController
         $event = new CustomerMigrateEvent($this->getMerchant(), $uuid);
 
         try {
-            $dispatcher->dispatch('customer.migrate.popup', $event);
+            $dispatcher->dispatch(CustomerMigrationSubscriber::CUSTOMER_MIGRATE_POPUP, $event);
             if (!$event->isSuccessful()) {
                 throw new GenericException(self::processError($event));
             }
@@ -60,7 +61,7 @@ class ControllerExpresslyMigrate extends CommonController
 
         try {
             $event = new CustomerMigrateEvent($this->getMerchant(), $uuid);
-            $dispatcher->dispatch('customer.migrate.data', $event);
+            $dispatcher->dispatch(CustomerMigrationSubscriber::CUSTOMER_MIGRATE_DATA, $event);
             $json = $event->getContent();
 
             if (!$event->isSuccessful()) {
@@ -173,7 +174,7 @@ class ControllerExpresslyMigrate extends CommonController
                 $this->session->data['coupon'] = $json['cart']['couponCode'];
             }
 
-            $dispatcher->dispatch('customer.migrate.success', $event);
+            $dispatcher->dispatch(CustomerMigrationSubscriber::CUSTOMER_MIGRATE_SUCCESS, $event);
         } catch (\Exception $e) {
             $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
         }

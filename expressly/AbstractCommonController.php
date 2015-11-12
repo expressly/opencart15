@@ -2,12 +2,12 @@
 
 use Expressly\Client;
 use Expressly\Entity\MerchantType;
-use Expressly\Event\ResponseEvent;
 
 abstract class AbstractCommonController extends Controller
 {
     private $app;
     private $dispatcher;
+    private $resolver;
 
     public function __construct($registry)
     {
@@ -20,8 +20,8 @@ abstract class AbstractCommonController extends Controller
 
         $this->app = $app;
         $this->dispatcher = $this->app['dispatcher'];
+        $this->resolver = $this->app['route.resolver'];
     }
-
 
 
     public static function processError(Symfony\Component\EventDispatcher\Event $event)
@@ -62,6 +62,11 @@ abstract class AbstractCommonController extends Controller
     public function getDispatcher()
     {
         return $this->dispatcher;
+    }
+
+    public function getResolver()
+    {
+        return $this->resolver;
     }
 
     public function getMerchant()

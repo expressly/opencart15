@@ -21,6 +21,7 @@ class ControllerExpresslyMigrate extends CommonController
 
         try {
             $dispatcher->dispatch(CustomerMigrationSubscriber::CUSTOMER_MIGRATE_POPUP, $event);
+
             if (!$event->isSuccessful()) {
                 throw new GenericException(self::processError($event));
             }
@@ -31,17 +32,17 @@ class ControllerExpresslyMigrate extends CommonController
             $this->redirect('/');
         }
 
-        $this->data['response'] = $event->getResponse();
+        $this->data['response'] = $event->getContent();
         $this->request->get['route'] = 'common/home';
 
         $this->children = array(
             'common/home'
         );
 
-        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/module/expressly.tpl')) {
-            $this->template = $this->config->get('config_template') . '/template/module/expressly.tpl';
+        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/module/expressly_popup.tpl')) {
+            $this->template = $this->config->get('config_template') . '/template/module/expressly_popup.tpl';
         } else {
-            $this->template = 'default/template/module/expressly.tpl';
+            $this->template = 'default/template/module/expressly_popup.tpl';
         }
 
         $this->document->addScript('catalog/view/javascript/expressly.js');
@@ -189,10 +190,10 @@ class ControllerExpresslyMigrate extends CommonController
             'common/home'
         );
 
-        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/module/expressly.tpl')) {
-            $this->template = $this->config->get('config_template') . '/template/module/expressly.tpl';
+        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/module/expressly_popup.tpl')) {
+            $this->template = $this->config->get('config_template') . '/template/module/expressly_popup.tpl';
         } else {
-            $this->template = 'default/template/module/expressly.tpl';
+            $this->template = 'default/template/module/expressly_popup.tpl';
         }
 
         $this->document->addScript('catalog/view/javascript/expressly.exists.js');

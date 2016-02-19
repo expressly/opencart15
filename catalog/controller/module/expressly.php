@@ -1,12 +1,7 @@
 <?php
 
 
-use Expressly\Client;
-use Expressly\Entity\MerchantType;
 use Admin\CommonController;
-use Expressly\Event\MerchantEvent;
-use Expressly\Event\PasswordedEvent;
-use Expressly\Exception\GenericException;
 
 require_once __DIR__ . '/../../../expressly/includes.php';
 
@@ -25,15 +20,17 @@ class ControllerModuleExpressly extends CommonController
         $email = $this->customer->getEmail();
 
         // Ignore if unauthorized
-        if (!$email) return;
+        if (!$email) {
+            return;
+        }
 
-        $app        = $this->getApp();
+        $app = $this->getApp();
         $dispatcher = $this->getDispatcher();
-        $merchant   = $this->getMerchant();
+        $merchant = $this->getMerchant();
 
         $event = new Expressly\Event\BannerEvent($merchant, $email);
-        try {
 
+        try {
             $dispatcher->dispatch(Expressly\Subscriber\BannerSubscriber::BANNER_REQUEST, $event);
 
             $content = $event->getContent();
@@ -49,10 +46,10 @@ class ControllerModuleExpressly extends CommonController
             $this->data['error_warning'] = (string)$e->getMessage();
         }
 
-        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/module/expressly.tpl')) {
-            $this->template = $this->config->get('config_template') . '/template/module/expressly.tpl';
+        if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/module/expressly_banner.tpl')) {
+            $this->template = $this->config->get('config_template') . '/template/module/expressly_banner.tpl';
         } else {
-            $this->template = 'default/template/module/expressly.tpl';
+            $this->template = 'default/template/module/expressly_banner.tpl';
         }
 
         $this->data['banner'] = Expressly\Helper\BannerHelper::toHtml($event);

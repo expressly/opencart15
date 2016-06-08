@@ -30,7 +30,6 @@ class ControllerExpresslyDispatcher extends CommonController
     public function index()
     {
         $query = $this->request->get['query'];
-
         $route = $this->getResolver()->process($query);
 
         if ($route instanceof Route) {
@@ -43,6 +42,7 @@ class ControllerExpresslyDispatcher extends CommonController
                     break;
                 case UserData::getName():
                     $data = $route->getData();
+                    $this->response->addHeader('Content-Type: application/json');
                     $this->response->setOutput(json_encode($this->retrieveUserByEmail($data['email'])));
                     break;
                 case CampaignPopup::getName():
@@ -54,9 +54,11 @@ class ControllerExpresslyDispatcher extends CommonController
                     $this->redirect($this->url->link('expressly/migrate/complete', "uuid={$data['uuid']}", 'SSL'));
                     break;
                 case BatchCustomer::getName():
+                    $this->response->addHeader('Content-Type: application/json');
                     $this->response->setOutput(json_encode($this->getBulkCustomers()));
                     break;
                 case BatchInvoice::getName():
+                    $this->response->addHeader('Content-Type: application/json');
                     $this->response->setOutput(json_encode($this->getBulkInvoices()));
                     break;
             }
@@ -70,12 +72,14 @@ class ControllerExpresslyDispatcher extends CommonController
     private function ping()
     {
         $presenter = new PingPresenter();
+        $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($presenter->toArray()));
     }
 
     private function registered()
     {
         $presenter = new RegisteredPresenter();
+        $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($presenter->toArray()));
     }
 

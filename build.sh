@@ -46,6 +46,5 @@ echo "[Packaging extension]"
 tar -czf ${DIR}/out/expressly-${1-dev}-opencart-1.5.tgz -C ${DIR}/out/src .
 pushd ${DIR}/out/src
 pwd
-ls .
 zip -r ${DIR}/out/expressly-${1-dev}-opencart-1.5.zip .
 popd

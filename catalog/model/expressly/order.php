@@ -14,6 +14,6 @@ class ModelExpresslyOrder extends Model
             )
         );
 
-        return $query->row;
+        return $query->rows;
     }
 }

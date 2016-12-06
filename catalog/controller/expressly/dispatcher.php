@@ -206,6 +206,7 @@ class ControllerExpresslyDispatcher extends CommonController
 
             $this->load->model('expressly/order');
             $this->load->model('expressly/voucher');
+            $this->load->model('account/customer');
             $this->load->model('account/order');
 
             foreach ($json->customers as $customer) {
@@ -213,12 +214,15 @@ class ControllerExpresslyDispatcher extends CommonController
                     continue;
                 }
 
-                $ocOrders = $this->model_expressly_order->getOrderIdByCustomerAndDateRange($customer->email,
-                    $customer->from, $customer->to);
-
-                if (empty($ocOrders)) {
+                $ocCustomer = $this->model_account_customer->getCustomerByEmail($customer->email);
+                if (empty($ocCustomer)) {
                     continue;
                 }
+
+                $ocOrders = $this->model_expressly_order->getOrderIdByCustomerAndDateRange(
+                    $ocCustomer['customer_id'],
+                    $customer->from,
+                    $customer->to);
 
                 $invoice = new Invoice();
                 $invoice->setEmail($customer->email);

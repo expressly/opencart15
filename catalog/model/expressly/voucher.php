@@ -6,7 +6,7 @@ class ModelExpresslyVoucher extends Model
     {
         $query = $this->db->query(
             sprintf(
-                'SELECT `code` FROM %order_voucher WHERE `order_id`=%u',
+                'SELECT `code` FROM %sorder_voucher WHERE `order_id`=%u',
                 DB_PREFIX,
                 $id
             )

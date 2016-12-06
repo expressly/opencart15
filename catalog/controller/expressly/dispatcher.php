@@ -158,7 +158,9 @@ class ControllerExpresslyDispatcher extends CommonController
         $json = file_get_contents('php://input');
         $json = json_decode($json);
 
-        $customers = array();
+        $existing = array();
+        $deleted = array();
+        $pending = array();
 
         try {
             if (!property_exists($json, 'emails')) {
@@ -174,24 +176,19 @@ class ControllerExpresslyDispatcher extends CommonController
                     continue;
                 }
                 if (!$ocCustomer['status']) {
-                    $customers['deleted'][] = $email;
-                    continue;
+                    $deleted[] = $email;
+                } else if (!$ocCustomer['approved']) {
+                    $pending[] = $email;
+                } else {
+                    $existing[] = $email;
                 }
-                if (!$ocCustomer['approved']) {
-                    $customers['pending'][] = $email;
-                    continue;
-                }
-
-                $customers['existing'][] = $email;
             }
         } catch (\Exception $e) {
             $app = $this->getApp();
             $app['logger']->error(ExceptionFormatter::format($e));
         }
 
-        // TODO: use static names defined once for array indexes
-        $presenter = new BatchCustomerPresenter($customers);
-
+        $presenter = new BatchCustomerPresenter($existing, $deleted, $pending);
         return $presenter->toArray();
     }
 

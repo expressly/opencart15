@@ -181,7 +181,7 @@ class ControllerModuleExpressly extends CommonController
     public function uninstall()
     {
         $this->load->model('setting/setting');
-        $this->model_setting_setting->deleteSetting('expressly_preferences');
+        //$this->model_setting_setting->deleteSetting('expressly_preferences');
 
         $app = $this->getApp();
         $merchant = $this->getMerchant();

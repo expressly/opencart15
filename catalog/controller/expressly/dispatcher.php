@@ -89,6 +89,7 @@ class ControllerExpresslyDispatcher extends CommonController
         $ocCustomer = $this->model_account_customer->getCustomerByEmail($emailAddress);
 
         if (empty($ocCustomer)) {
+            header('HTTP/1.1 404 Unauthorized', true, 404);
             return array();
         }
 

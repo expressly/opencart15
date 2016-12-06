@@ -12,7 +12,8 @@ class ControllerExpresslyMigrate extends CommonController
     public function popup()
     {
         if (empty($this->request->get['uuid'])) {
-            $this->redirect('/');
+            $this->redirect($this->baseUrl());
+            return;
         }
 
         $uuid = $this->request->get['uuid'];
@@ -28,8 +29,8 @@ class ControllerExpresslyMigrate extends CommonController
         } catch (\Exception $e) {
             $app = $this->getApp();
             $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
-
-            $this->redirect('/');
+            $this->redirect('https://prod.expresslyapp.com/api/redirect/migration/' . $uuid . '/failed');
+            return;
         }
 
         $this->data['response'] = $event->getContent();
@@ -52,7 +53,8 @@ class ControllerExpresslyMigrate extends CommonController
     public function complete()
     {
         if (empty($this->request->get['uuid'])) {
-            $this->redirect('/');
+            $this->redirect($this->baseUrl());
+            return;
         }
 
         $uuid = $this->request->get['uuid'];
@@ -175,13 +177,15 @@ class ControllerExpresslyMigrate extends CommonController
                 $this->session->data['coupon'] = $json['cart']['couponCode'];
             }
 
-            $dispatcher->dispatch(CustomerMigrationSubscriber::CUSTOMER_MIGRATE_SUCCESS, $event);
+            $this->redirect('https://prod.expresslyapp.com/api/redirect/migration/' . $uuid . '/success');
+            return;
         } catch (\Exception $e) {
             $app['logger']->error(Expressly\Exception\ExceptionFormatter::format($e));
         }
 
         if (!$exists) {
-            $this->redirect('/');
+            $this->redirect('https://prod.expresslyapp.com/api/redirect/migration/' . $uuid . '/failed');
+            return;
         }
 
         $this->request->get['route'] = 'common/home';
@@ -198,5 +202,13 @@ class ControllerExpresslyMigrate extends CommonController
 
         $this->document->addScript('catalog/view/javascript/expressly.exists.js');
         $this->response->setOutput($this->render());
+    }
+
+    public function baseUrl() {
+        if (isset($this->request->server['HTTPS']) && (($this->request->server['HTTPS'] == 'on') || ($this->request->server['HTTPS'] == '1'))) {
+            return $this->config->get('config_ssl');
+        } else {
+            return $this->config->get('config_url');
+        }
     }
 }
